@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight, Loader2, LockKeyhole, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,24 +18,36 @@ export function LoginForm() {
   const [email, setEmail] = useState("founder@example.com");
   const [password, setPassword] = useState("password123");
   const [fullName, setFullName] = useState("Startup Founder");
-  const [organizationId, setOrganizationId] = useState("");
+  const [organizationId, setOrganizationId] = useState("8f5d3dbf-2ab8-4fb5-9c6a-4b65b1e62f31");
+  const activeOrganizationId = useMemo(() => organizationId.trim(), [organizationId]);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await login.mutateAsync({ email, password, organization_id: organizationId });
-    router.push("/dashboard");
+    try {
+      await login.mutateAsync({ email, password, organization_id: activeOrganizationId });
+      router.push("/dashboard");
+    } catch {
+      // React Query exposes the error state below the form.
+    }
   }
 
   async function handleSignup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await signup.mutateAsync({ email, password, full_name: fullName });
-    router.push("/dashboard");
+    try {
+      await signup.mutateAsync({ email, password, full_name: fullName });
+      router.push("/dashboard");
+    } catch {
+      // React Query exposes the error state below the form.
+    }
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="surface-panel w-full max-w-md">
       <CardHeader>
-        <CardTitle>Access workspace</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <LockKeyhole className="h-4 w-4 text-primary" />
+          Access workspace
+        </CardTitle>
         <CardDescription>Use an existing organization or create a founder workspace.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -58,6 +71,7 @@ export function LoginForm() {
                 <Input id="signup-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
               </div>
               <Button type="submit" disabled={signup.isPending}>
+                {signup.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
                 {signup.isPending ? "Creating..." : "Create workspace"}
               </Button>
               {signup.error ? <p className="text-sm text-destructive">{signup.error.message}</p> : null}
@@ -75,9 +89,10 @@ export function LoginForm() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="organization-id">Organization ID</Label>
-                <Input id="organization-id" value={organizationId} onChange={(event) => setOrganizationId(event.target.value)} />
+                <Input id="organization-id" value={organizationId} onChange={(event) => setOrganizationId(event.target.value)} placeholder="Paste organization UUID" />
               </div>
-              <Button type="submit" disabled={login.isPending || !organizationId}>
+              <Button type="submit" disabled={login.isPending || !activeOrganizationId}>
+                {login.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
                 {login.isPending ? "Signing in..." : "Sign in"}
               </Button>
               {login.error ? <p className="text-sm text-destructive">{login.error.message}</p> : null}
@@ -88,4 +103,3 @@ export function LoginForm() {
     </Card>
   );
 }
-

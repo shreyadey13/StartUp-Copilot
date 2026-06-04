@@ -32,6 +32,8 @@ export async function apiClient<T>(path: string, options: ApiOptions = {}): Prom
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers
+  }).catch(() => {
+    throw new ApiError("API server is offline", 0, "network_error");
   });
 
   if (!response.ok) {
@@ -47,4 +49,3 @@ export async function apiClient<T>(path: string, options: ApiOptions = {}): Prom
 
   return response.json() as Promise<T>;
 }
-

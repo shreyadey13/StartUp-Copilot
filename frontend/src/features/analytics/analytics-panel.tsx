@@ -11,7 +11,7 @@ const signals = [
 
 export function AnalyticsPanel() {
   return (
-    <Card>
+    <Card className="surface-panel">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Validation Signals</CardTitle>
         <Badge variant="warning">Live model</Badge>
@@ -30,4 +30,3 @@ export function AnalyticsPanel() {
     </Card>
   );
 }
-

@@ -9,7 +9,7 @@ import { navigationItems } from "@/config/navigation";
 import { APP_NAME } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 import { useUiStore } from "@/store/ui-store";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Rocket } from "lucide-react";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -19,13 +19,16 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "hidden min-h-screen border-r bg-background transition-[width] duration-200 lg:block",
+        "hidden min-h-screen border-r bg-card/80 backdrop-blur transition-[width] duration-200 lg:block",
         collapsed ? "w-[76px]" : "w-64"
       )}
     >
       <div className="flex h-16 items-center justify-between px-4">
-        <Link href="/dashboard" className={cn("font-semibold", collapsed && "sr-only")}>
-          {APP_NAME}
+        <Link href="/dashboard" className="flex min-w-0 items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
+            <Rocket className="h-4 w-4" />
+          </span>
+          <span className={cn("truncate font-semibold", collapsed && "sr-only")}>{APP_NAME}</span>
         </Link>
         <Button variant="ghost" size="icon" onClick={toggleSidebar} aria-label="Toggle sidebar">
           {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
@@ -42,7 +45,7 @@ export function Sidebar() {
               href={item.href}
               className={cn(
                 "flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
-                active && "bg-secondary text-foreground",
+                active && "bg-primary/10 text-primary ring-1 ring-primary/15",
                 collapsed && "justify-center px-0"
               )}
               title={item.title}
@@ -56,4 +59,3 @@ export function Sidebar() {
     </aside>
   );
 }
-

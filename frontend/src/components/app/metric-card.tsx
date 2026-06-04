@@ -14,16 +14,17 @@ export function MetricCard({
   icon: LucideIcon;
 }) {
   return (
-    <Card>
+    <Card className="surface-panel overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <Icon className="h-4 w-4" />
+        </span>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-semibold">{value}</div>
-        <p className="mt-1 text-xs text-muted-foreground">{delta}</p>
+        <div className="text-3xl font-semibold">{value}</div>
+        <p className="mt-2 text-xs font-medium text-primary">{delta}</p>
       </CardContent>
     </Card>
   );
 }
-

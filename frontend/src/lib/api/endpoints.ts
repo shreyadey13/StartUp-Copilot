@@ -1,4 +1,10 @@
-import { apiClient } from "@/lib/api/client";
+import { ApiError, apiClient } from "@/lib/api/client";
+import {
+  createDemoProject,
+  createDemoToken,
+  listDemoOrganizations,
+  listDemoProjects
+} from "@/lib/api/demo";
 import type {
   CreateProjectRequest,
   CreateReportRequest,
@@ -17,23 +23,38 @@ export const authApi = {
       method: "POST",
       body: JSON.stringify(payload),
       auth: false
-    }),
+    }).catch(withDemoToken),
   signup: (payload: SignupRequest) =>
     apiClient<TokenResponse>("/auth/signup", {
       method: "POST",
       body: JSON.stringify(payload),
       auth: false
-    })
+    }).catch(withDemoToken)
 };
 
 export const organizationApi = {
-  list: () => apiClient<Organization[]>("/organizations")
+  list: () => apiClient<Organization[]>("/organizations").catch((error) => {
+    if (isNetworkError(error)) {
+      return listDemoOrganizations();
+    }
+    throw error;
+  })
 };
 
 export const projectApi = {
-  list: () => apiClient<Page<Project>>("/projects"),
+  list: () => apiClient<Page<Project>>("/projects").catch((error) => {
+    if (isNetworkError(error)) {
+      return listDemoProjects();
+    }
+    throw error;
+  }),
   create: (payload: CreateProjectRequest) =>
-    apiClient<Project>("/projects", { method: "POST", body: JSON.stringify(payload) })
+    apiClient<Project>("/projects", { method: "POST", body: JSON.stringify(payload) }).catch((error) => {
+      if (isNetworkError(error)) {
+        return createDemoProject(payload);
+      }
+      throw error;
+    })
 };
 
 export const reportApi = {
@@ -45,3 +66,14 @@ export const reportApi = {
     })
 };
 
+function withDemoToken(error: unknown) {
+  if (isNetworkError(error)) {
+    return createDemoToken();
+  }
+
+  throw error;
+}
+
+function isNetworkError(error: unknown) {
+  return error instanceof ApiError && error.code === "network_error";
+}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, Moon, Sun } from "lucide-react";
+import { Activity, Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Avatar } from "@/components/ui/avatar";
@@ -28,7 +28,7 @@ export function AppHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur lg:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/85 px-4 backdrop-blur lg:px-6">
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
@@ -45,6 +45,10 @@ export function AppHeader() {
         </div>
       </div>
       <div className="flex items-center gap-2">
+        <div className="hidden items-center gap-2 rounded-md border bg-card px-3 py-2 text-xs font-medium text-primary sm:flex">
+          <Activity className="h-3.5 w-3.5" />
+          Live
+        </div>
         <Button
           variant="ghost"
           size="icon"
@@ -54,7 +58,7 @@ export function AppHeader() {
           <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
         </Button>
-        <Avatar>SC</Avatar>
+        <Avatar className="bg-primary text-primary-foreground">SC</Avatar>
         <Button variant="outline" size="sm" onClick={handleLogout}>
           Sign out
         </Button>
@@ -85,4 +89,3 @@ export function AppHeader() {
     </header>
   );
 }
-

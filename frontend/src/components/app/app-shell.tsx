@@ -13,16 +13,27 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const accessToken = useAuthStore((state) => state.accessToken);
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const isPublic = publicRoutes.has(pathname);
 
   useEffect(() => {
-    if (!accessToken && !isPublic) {
+    if (hasHydrated && !accessToken && !isPublic) {
       router.replace("/login");
     }
-  }, [accessToken, isPublic, router]);
+  }, [accessToken, hasHydrated, isPublic, router]);
 
   if (isPublic) {
     return <>{children}</>;
+  }
+
+  if (!hasHydrated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="surface-panel rounded-lg px-5 py-4 text-sm text-muted-foreground">
+          Preparing workspace...
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -37,4 +48,3 @@ export function AppShell({ children }: { children: ReactNode }) {
     </div>
   );
 }
-
