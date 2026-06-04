@@ -1,0 +1,39 @@
+image:
+  registry: ""
+  tag: latest
+
+frontend:
+  image:
+    repository: startup-copilot-frontend
+  replicas: 2
+  port: 3000
+  env:
+    NEXT_PUBLIC_API_BASE_URL: https://api.example.com/api/v1
+
+api:
+  image:
+    repository: startup-copilot-api
+  replicas: 2
+  port: 8000
+  env:
+    APP_NAME: AI Startup Copilot API
+    ENVIRONMENT: production
+    DEBUG: "false"
+    API_V1_PREFIX: /api/v1
+    JWT_ALGORITHM: HS256
+    ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+    LOG_LEVEL: INFO
+    CORS_ORIGINS: https://app.example.com
+
+secrets:
+  DATABASE_URL: ""
+  REDIS_URL: ""
+  JWT_SECRET_KEY: ""
+
+ingress:
+  enabled: true
+  className: alb
+  host: app.example.com
+  apiHost: api.example.com
+  certificateArn: ""
+
