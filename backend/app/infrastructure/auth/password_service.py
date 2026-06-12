@@ -1,13 +1,19 @@
-from passlib.context import CryptContext
+import bcrypt
 
 
 class PasswordService:
-    def __init__(self) -> None:
-        self._context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
     def hash_password(self, password: str) -> str:
-        return self._context.hash(password)
+        password_bytes = password.encode("utf-8")
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password_bytes, salt)
+        return hashed.decode("utf-8")
 
     def verify_password(self, password: str, password_hash: str) -> bool:
-        return self._context.verify(password, password_hash)
+        password_bytes = password.encode("utf-8")
+        hash_bytes = password_hash.encode("utf-8")
+        try:
+            return bcrypt.checkpw(password_bytes, hash_bytes)
+        except Exception:
+            return False
+
 

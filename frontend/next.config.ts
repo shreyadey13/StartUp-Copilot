@@ -16,7 +16,8 @@ const nextConfig: NextConfig = {
     : {}),
   outputFileTracingRoot: process.cwd(),
   reactStrictMode: true,
-  poweredByHeader: false
+  poweredByHeader: false,
+  trailingSlash: isGitHubPages
 };
 
 export default nextConfig;

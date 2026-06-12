@@ -1,4 +1,3 @@
-from uuid import UUID
 
 from app.application.dto import LoginRequest, SignUpRequest, TokenResponse
 from app.domain.exceptions import AuthenticationError, AuthorizationError, ConflictError
