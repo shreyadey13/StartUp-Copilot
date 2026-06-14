@@ -114,7 +114,7 @@ export default function ReportsPage() {
             <CardDescription>Reasoning factors from the analysis engine.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
-            {Object.entries(selected.breakdown).map(([key, value]) => (
+            {Object.entries(selected.breakdown ?? {}).map(([key, value]) => (
               <div key={key} className="rounded-2xl border bg-background/70 p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{key}</p>
                 <p className="mt-2 text-2xl font-semibold">{value}</p>

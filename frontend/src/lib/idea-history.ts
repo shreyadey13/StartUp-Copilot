@@ -9,7 +9,7 @@ export function loadIdeaHistory(): IdeaValidationHistoryEntry[] {
 
   try {
     const stored = window.localStorage.getItem(IDEA_HISTORY_KEY);
-    return stored ? (JSON.parse(stored) as IdeaValidationHistoryEntry[]) : [];
+    return stored ? normalizeHistory(JSON.parse(stored) as IdeaValidationHistoryEntry[]) : [];
   } catch {
     return [];
   }
@@ -27,4 +27,21 @@ export function upsertIdeaHistory(entry: IdeaValidationHistoryEntry) {
   const entries = [entry, ...loadIdeaHistory().filter((item) => item.id !== entry.id)].slice(0, 12);
   saveIdeaHistory(entries);
   return entries;
+}
+
+function normalizeHistory(entries: IdeaValidationHistoryEntry[]): IdeaValidationHistoryEntry[] {
+  return entries.map((entry) => ({
+    ...entry,
+    breakdown: entry.breakdown ?? {
+      ai: 0,
+      data: 0,
+      revenue: 0,
+      audience: 0,
+      problem: 0,
+      distribution: 0,
+      specificity: 0
+    },
+    reportSummary: entry.reportSummary ?? entry.summary,
+    reportType: entry.reportType ?? "validation"
+  }));
 }
