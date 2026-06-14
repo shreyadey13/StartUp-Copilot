@@ -66,17 +66,31 @@ def analyze_idea(idea: str) -> IdeaValidationAnalysis:
     has_ai = bool(re.search(r"\bai|agent|copilot|assistant|automation\b", normalized))
     has_data = bool(re.search(r"\bmarket|data|analytics|sentiment|reddit|search\b", normalized))
     has_revenue = bool(re.search(r"\bsubscription|pricing|revenue|sell|pay|mrr|saas\b", normalized))
+    has_problem = bool(re.search(r"\bproblem|pain|friction|slow|manual|waste|hard\b", normalized))
+    has_distribution = bool(re.search(r"\bacquire|launch|channel|reach|seo|community|sales\b", normalized))
+    has_specificity = len(idea.split()) >= 18 and len(idea) >= 120
 
-    score = min(
-        96,
-        38
-        + (14 if has_ai else 0)
-        + (12 if has_data else 0)
-        + (10 if has_revenue else 0)
-        + (8 if has_b2b or has_consumer else 0)
-        + min(12, len(idea) // 25),
+    breakdown = {
+        "ai": 14 if has_ai else 0,
+        "data": 12 if has_data else 0,
+        "revenue": 10 if has_revenue else 0,
+        "audience": 8 if has_b2b or has_consumer else 0,
+        "problem": 12 if has_problem else 0,
+        "distribution": 8 if has_distribution else 0,
+        "specificity": 10 if has_specificity else 0,
+    }
+
+    base = 28 + min(10, len(idea) // 35)
+    score = min(96, base + sum(breakdown.values()))
+    confidence = min(
+        94,
+        46
+        + (8 if has_data else 0)
+        + (6 if has_ai else 0)
+        + (6 if has_problem else 0)
+        + (4 if has_distribution else 0)
+        + (4 if has_specificity else 0),
     )
-    confidence = min(94, max(52, 48 + len(idea) // 24 + (8 if has_data else 0) + (6 if has_ai else 0)))
 
     customer = (
         "Mixed audience, likely needs sharper segmentation"
@@ -123,6 +137,7 @@ def analyze_idea(idea: str) -> IdeaValidationAnalysis:
     return IdeaValidationAnalysis(
         score=score,
         confidence=confidence,
+        breakdown=breakdown,
         summary=summary,
         customer=customer,
         pain=pain,

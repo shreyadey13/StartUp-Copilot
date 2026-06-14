@@ -10,7 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useValidateIdeaMutation } from "@/lib/api/hooks";
-import type { IdeaValidationAnalysis } from "@/lib/api/types";
+import type { IdeaValidationAnalysis, IdeaValidationHistoryEntry } from "@/lib/api/types";
+
+const HISTORY_KEY = "ai-startup-copilot-idea-validation-history";
 
 const defaultIdea =
   "An AI copilot that helps first-time founders validate startup ideas using market data and Reddit sentiment.";
@@ -22,6 +24,7 @@ export function IdeaValidationWorkspace() {
   const [analysis, setAnalysis] = useState<IdeaValidationAnalysis>(fallbackAnalysis);
   const [submittedAt, setSubmittedAt] = useState<string>("Ready for your idea");
   const [artifact, setArtifact] = useState<{ projectName: string; reportTitle: string } | null>(null);
+  const [recentHistory, setRecentHistory] = useState<IdeaValidationHistoryEntry[]>(() => loadHistory());
   const validateIdea = useValidateIdeaMutation();
 
   const completion = useMemo(() => Math.min(100, Math.max(45, analysis.score + 8)), [analysis.score]);
@@ -38,12 +41,40 @@ export function IdeaValidationWorkspace() {
       setAnalysis(result.analysis);
       setArtifact({ projectName: result.project.name, reportTitle: result.report.title });
       setSubmittedAt(new Date(result.report.created_at).toLocaleString());
+      persistHistory({
+        id: result.report.id,
+        idea: trimmedIdea,
+        projectName: result.project.name,
+        reportTitle: result.report.title,
+        score: result.analysis.score,
+        confidence: result.analysis.confidence,
+        createdAt: result.report.created_at,
+        customer: result.analysis.customer,
+        summary: result.analysis.summary
+      });
     } catch {
       const nextAnalysis = analyzeIdea(trimmedIdea);
       setAnalysis(nextAnalysis);
       setArtifact({ projectName: deriveProjectName(trimmedIdea), reportTitle: "Idea validation report" });
       setSubmittedAt(new Date().toLocaleString());
+      persistHistory({
+        id: `local-${Date.now()}`,
+        idea: trimmedIdea,
+        projectName: deriveProjectName(trimmedIdea),
+        reportTitle: "Idea validation report",
+        score: nextAnalysis.score,
+        confidence: nextAnalysis.confidence,
+        createdAt: new Date().toISOString(),
+        customer: nextAnalysis.customer,
+        summary: nextAnalysis.summary
+      });
     }
+  }
+
+  function persistHistory(entry: IdeaValidationHistoryEntry) {
+    const next = [entry, ...loadHistory()].slice(0, 12);
+    setRecentHistory(next);
+    window.localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
   }
 
   return (
@@ -87,11 +118,49 @@ export function IdeaValidationWorkspace() {
             </div>
           ) : null}
 
+          {recentHistory.length > 0 ? (
+            <Card className="rounded-2xl border bg-background/70">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Recent validations</CardTitle>
+                <CardDescription>Stored locally so you can revisit your last ideas quickly.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-3">
+                {recentHistory.map((entry) => (
+                  <div key={entry.id} className="grid gap-2 rounded-2xl border bg-card/80 p-4 md:grid-cols-[1fr_auto] md:items-center">
+                    <div>
+                      <p className="font-medium">{entry.projectName}</p>
+                      <p className="text-sm text-muted-foreground">{entry.idea}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline">{entry.score}/100</Badge>
+                      <Badge variant="outline">{entry.confidence}% confidence</Badge>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          ) : null}
+
           <div className="grid gap-3 md:grid-cols-3">
             <InsightCard label="Target customer" value={analysis.customer} />
             <InsightCard label="Primary pain" value={analysis.pain} />
             <InsightCard label="Known alternatives" value={analysis.alternatives} />
           </div>
+
+          <Card className="rounded-2xl border bg-background/70">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Score breakdown</CardTitle>
+              <CardDescription>Why this idea scored the way it did.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
+              {Object.entries(analysis.breakdown).map(([label, value]) => (
+                <div key={label} className="rounded-2xl border bg-card/80 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
+                  <p className="mt-2 text-2xl font-semibold">{value}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
 
           <div className="grid gap-4 md:grid-cols-2">
             <Card className="rounded-2xl border bg-background/70">
@@ -201,17 +270,28 @@ function analyzeIdea(input: string): IdeaValidationAnalysis {
   const hasAi = /\bai|agent|copilot|assistant|automation\b/.test(normalized);
   const hasData = /\bmarket|data|analytics|sentiment|reddit|search\b/.test(normalized);
   const hasRevenue = /\bsubscription|pricing|revenue|sell|pay|mrr|saas\b/.test(normalized);
+  const hasProblem = /\bproblem|pain|friction|slow|manual|waste|hard\b/.test(normalized);
+  const hasDistribution = /\bacquire|launch|channel|reach|seo|community|sales\b/.test(normalized);
+  const hasSpecificity = input.split(/\s+/).filter(Boolean).length >= 18 && input.length >= 120;
+
+  const breakdown = {
+    ai: hasAi ? 14 : 0,
+    data: hasData ? 12 : 0,
+    revenue: hasRevenue ? 10 : 0,
+    audience: hasB2B || hasConsumer ? 8 : 0,
+    problem: hasProblem ? 12 : 0,
+    distribution: hasDistribution ? 8 : 0,
+    specificity: hasSpecificity ? 10 : 0
+  };
 
   const score = Math.min(
     96,
-    38 +
-      (hasAi ? 14 : 0) +
-      (hasData ? 12 : 0) +
-      (hasRevenue ? 10 : 0) +
-      (hasB2B || hasConsumer ? 8 : 0) +
-      Math.min(12, Math.floor(input.length / 25))
+    28 + Math.min(10, Math.floor(input.length / 35)) + Object.values(breakdown).reduce((sum, value) => sum + value, 0)
   );
-  const confidence = Math.min(94, Math.max(52, 48 + Math.floor(input.length / 24) + (hasData ? 8 : 0) + (hasAi ? 6 : 0)));
+  const confidence = Math.min(
+    94,
+    Math.max(52, 46 + Math.floor(input.length / 24) + (hasData ? 8 : 0) + (hasAi ? 6 : 0) + (hasProblem ? 6 : 0))
+  );
 
   const customer =
     hasB2B && hasConsumer
@@ -253,6 +333,7 @@ function analyzeIdea(input: string): IdeaValidationAnalysis {
   return {
     score,
     confidence,
+    breakdown,
     summary: `This idea looks ${score >= 70 ? "promising" : score >= 55 ? "early-stage" : "too broad"} for a first pass. It will need sharper customer definition and a very specific problem statement.`,
     customer,
     pain,
@@ -269,4 +350,17 @@ function deriveProjectName(idea: string) {
     return "Idea Validation";
   }
   return words.slice(0, 4).join(" ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function loadHistory(): IdeaValidationHistoryEntry[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const stored = window.localStorage.getItem(HISTORY_KEY);
+    return stored ? (JSON.parse(stored) as IdeaValidationHistoryEntry[]) : [];
+  } catch {
+    return [];
+  }
 }

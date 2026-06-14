@@ -76,6 +76,7 @@ export type IdeaValidationRequest = {
 export type IdeaValidationAnalysis = {
   score: number;
   confidence: number;
+  breakdown: Record<string, number>;
   summary: string;
   customer: string;
   pain: string;
@@ -89,4 +90,16 @@ export type IdeaValidationResponse = {
   project: Project;
   report: Report;
   analysis: IdeaValidationAnalysis;
+};
+
+export type IdeaValidationHistoryEntry = {
+  id: string;
+  idea: string;
+  projectName: string;
+  reportTitle: string;
+  score: number;
+  confidence: number;
+  createdAt: string;
+  customer: string;
+  summary: string;
 };

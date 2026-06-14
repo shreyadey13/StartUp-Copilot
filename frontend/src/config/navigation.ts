@@ -14,6 +14,7 @@ export const navigationItems = [
   { title: "Dashboard", href: "/dashboard", icon: Gauge },
   { title: "Projects", href: "/projects", icon: BriefcaseBusiness },
   { title: "Idea Analysis", href: "/idea-analysis", icon: Sparkles },
+  { title: "Idea History", href: "/idea-history", icon: FileText },
   { title: "Competitors", href: "/competitor-analysis", icon: Building2 },
   { title: "Market Research", href: "/market-research", icon: Search },
   { title: "Reports", href: "/reports", icon: FileText },
@@ -26,4 +27,3 @@ export const dashboardMetrics = [
   { label: "Reports Ready", value: "31", delta: "9 exported", icon: FileText },
   { label: "Market Signals", value: "246", delta: "Reddit + web", icon: LineChart }
 ];
-

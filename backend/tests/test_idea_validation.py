@@ -88,4 +88,4 @@ async def test_validate_idea_creates_project_and_report(client: AsyncClient) -> 
     payload = response.json()
     assert payload["project"]["name"] == "Feedback Copilot"
     assert payload["report"]["report_type"] == "validation"
-    assert payload["analysis"]["score"] >= 50
+    assert payload["analysis"]["score"] >= 40

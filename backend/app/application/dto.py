@@ -83,6 +83,7 @@ class IdeaValidationRequest(BaseModel):
 class IdeaValidationAnalysis(BaseModel):
     score: int
     confidence: int
+    breakdown: dict[str, int]
     summary: str
     customer: str
     pain: str
