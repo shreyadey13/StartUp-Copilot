@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Clock3, FileText, Target, TrendingUp } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -11,10 +10,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { loadIdeaHistory } from "@/lib/idea-history";
 
 export default function ReportsPage() {
-  const searchParams = useSearchParams();
+  const [reportId, setReportId] = useState<string | null>(null);
+  const [history, setHistory] = useState(() => loadIdeaHistory());
+
   const reports = useMemo(
     () =>
-      loadIdeaHistory().map((entry) => ({
+      history.map((entry) => ({
         id: entry.id,
         title: entry.reportTitle,
         status: "Ready",
@@ -22,10 +23,21 @@ export default function ReportsPage() {
         summary: entry.reportSummary || entry.summary,
         createdAt: entry.createdAt
       })),
-    []
+    [history]
   );
-  const reportId = searchParams.get("reportId");
-  const selected = loadIdeaHistory().find((entry) => entry.id === reportId);
+  const selected = history.find((entry) => entry.id === reportId) ?? null;
+
+  useEffect(() => {
+    const syncFromLocation = () => {
+      const value = new URLSearchParams(window.location.search).get("reportId");
+      setReportId(value);
+      setHistory(loadIdeaHistory());
+    };
+
+    syncFromLocation();
+    window.addEventListener("popstate", syncFromLocation);
+    return () => window.removeEventListener("popstate", syncFromLocation);
+  }, []);
 
   if (selected) {
     return (
