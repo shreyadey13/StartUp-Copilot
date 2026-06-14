@@ -8,6 +8,8 @@ import {
 import type {
   CreateProjectRequest,
   CreateReportRequest,
+  IdeaValidationRequest,
+  IdeaValidationResponse,
   LoginRequest,
   Organization,
   Page,
@@ -61,6 +63,14 @@ export const reportApi = {
   list: (projectId: string) => apiClient<Page<Report>>(`/projects/${projectId}/reports`),
   create: (projectId: string, payload: CreateReportRequest) =>
     apiClient<Report>(`/projects/${projectId}/reports`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    })
+};
+
+export const ideaApi = {
+  validate: (payload: IdeaValidationRequest) =>
+    apiClient<IdeaValidationResponse>("/ideas/validate", {
       method: "POST",
       body: JSON.stringify(payload)
     })

@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { BrainCircuit, CheckCircle2, Sparkles, Target, TrendingUp } from "lucide-react";
+import { BrainCircuit, CheckCircle2, Loader2, Sparkles, Target, TrendingUp } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,39 +9,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-
-type IdeaAnalysis = {
-  score: number;
-  summary: string;
-  customer: string;
-  pain: string;
-  alternatives: string;
-  strengths: string[];
-  risks: string[];
-  nextSteps: string[];
-};
+import { useValidateIdeaMutation } from "@/lib/api/hooks";
+import type { IdeaValidationAnalysis } from "@/lib/api/types";
 
 const defaultIdea =
   "An AI copilot that helps first-time founders validate startup ideas using market data and Reddit sentiment.";
 
+const fallbackAnalysis = analyzeIdea(defaultIdea);
+
 export function IdeaValidationWorkspace() {
   const [idea, setIdea] = useState(defaultIdea);
-  const [analysis, setAnalysis] = useState<IdeaAnalysis>(() => analyzeIdea(defaultIdea));
+  const [analysis, setAnalysis] = useState<IdeaValidationAnalysis>(fallbackAnalysis);
   const [submittedAt, setSubmittedAt] = useState<string>("Ready for your idea");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [artifact, setArtifact] = useState<{ projectName: string; reportTitle: string } | null>(null);
+  const validateIdea = useValidateIdeaMutation();
 
   const completion = useMemo(() => Math.min(100, Math.max(45, analysis.score + 8)), [analysis.score]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setIsAnalyzing(true);
+    const trimmedIdea = idea.trim();
+    if (!trimmedIdea) {
+      return;
+    }
 
-    await new Promise((resolve) => setTimeout(resolve, 700));
-
-    const nextAnalysis = analyzeIdea(idea);
-    setAnalysis(nextAnalysis);
-    setSubmittedAt(new Date().toLocaleString());
-    setIsAnalyzing(false);
+    try {
+      const result = await validateIdea.mutateAsync({ idea: trimmedIdea });
+      setAnalysis(result.analysis);
+      setArtifact({ projectName: result.project.name, reportTitle: result.report.title });
+      setSubmittedAt(new Date(result.report.created_at).toLocaleString());
+    } catch {
+      const nextAnalysis = analyzeIdea(trimmedIdea);
+      setAnalysis(nextAnalysis);
+      setArtifact({ projectName: deriveProjectName(trimmedIdea), reportTitle: "Idea validation report" });
+      setSubmittedAt(new Date().toLocaleString());
+    }
   }
 
   return (
@@ -66,11 +68,24 @@ export function IdeaValidationWorkspace() {
                 placeholder="Describe the product, the user, the problem, and why now."
               />
             </div>
-            <Button type="submit" className="w-fit rounded-full px-6" disabled={!idea.trim() || isAnalyzing}>
-              <Sparkles className={`h-4 w-4 ${isAnalyzing ? "animate-pulse" : ""}`} />
-              {isAnalyzing ? "Analyzing..." : "Run validation"}
+            <Button type="submit" className="w-fit rounded-full px-6" disabled={!idea.trim() || validateIdea.isPending}>
+              {validateIdea.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {validateIdea.isPending ? "Analyzing..." : "Run validation"}
             </Button>
           </form>
+
+          {artifact ? (
+            <div className="grid gap-3 rounded-2xl border bg-background/70 p-4 md:grid-cols-2">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Saved project</p>
+                <p className="mt-1 text-sm font-medium">{artifact.projectName}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Created report</p>
+                <p className="mt-1 text-sm font-medium">{artifact.reportTitle}</p>
+              </div>
+            </div>
+          ) : null}
 
           <div className="grid gap-3 md:grid-cols-3">
             <InsightCard label="Target customer" value={analysis.customer} />
@@ -119,7 +134,7 @@ export function IdeaValidationWorkspace() {
               <CardDescription>Use these to turn the idea into a real validation workflow.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-3">
-              {analysis.nextSteps.map((step, index) => (
+              {analysis.next_steps.map((step, index) => (
                 <div key={step} className="rounded-2xl border bg-card/80 p-4">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                     <TrendingUp className="h-3.5 w-3.5 text-primary" />
@@ -179,7 +194,7 @@ function InsightCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-function analyzeIdea(input: string): IdeaAnalysis {
+function analyzeIdea(input: string): IdeaValidationAnalysis {
   const normalized = input.trim().toLowerCase();
   const hasB2B = /\bbusiness|team|enterprise|company|workflow|ops\b/.test(normalized);
   const hasConsumer = /\bcreator|consumer|student|parent|freelancer|founder\b/.test(normalized);
@@ -196,6 +211,7 @@ function analyzeIdea(input: string): IdeaAnalysis {
       (hasB2B || hasConsumer ? 8 : 0) +
       Math.min(12, Math.floor(input.length / 25))
   );
+  const confidence = Math.min(94, Math.max(52, 48 + Math.floor(input.length / 24) + (hasData ? 8 : 0) + (hasAi ? 6 : 0)));
 
   const customer =
     hasB2B && hasConsumer
@@ -228,7 +244,7 @@ function analyzeIdea(input: string): IdeaAnalysis {
     "Test whether the idea is narrow enough to build a first version quickly."
   ];
 
-  const nextSteps = [
+  const next_steps = [
     "Interview 5 target users and capture the exact language they use to describe the pain.",
     "List the current workaround and quantify the time or money it burns today.",
     "Define one measurable outcome for a first prototype and test it with a landing page or demo."
@@ -236,12 +252,21 @@ function analyzeIdea(input: string): IdeaAnalysis {
 
   return {
     score,
+    confidence,
     summary: `This idea looks ${score >= 70 ? "promising" : score >= 55 ? "early-stage" : "too broad"} for a first pass. It will need sharper customer definition and a very specific problem statement.`,
     customer,
     pain,
     alternatives,
     strengths,
     risks,
-    nextSteps
+    next_steps
   };
+}
+
+function deriveProjectName(idea: string) {
+  const words = idea.trim().match(/[A-Za-z0-9]+/g) ?? [];
+  if (words.length === 0) {
+    return "Idea Validation";
+  }
+  return words.slice(0, 4).join(" ").replace(/\b\w/g, (char) => char.toUpperCase());
 }

@@ -73,3 +73,26 @@ class ReportRead(BaseModel):
     confidence_score: float | None
     created_at: datetime
     updated_at: datetime
+
+
+class IdeaValidationRequest(BaseModel):
+    idea: str = Field(min_length=10, max_length=4000)
+    project_name: str | None = Field(default=None, max_length=255)
+
+
+class IdeaValidationAnalysis(BaseModel):
+    score: int
+    confidence: int
+    summary: str
+    customer: str
+    pain: str
+    alternatives: str
+    strengths: list[str]
+    risks: list[str]
+    next_steps: list[str]
+
+
+class IdeaValidationResponse(BaseModel):
+    project: ProjectRead
+    report: ReportRead
+    analysis: IdeaValidationAnalysis

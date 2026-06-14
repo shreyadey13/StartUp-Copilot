@@ -2,8 +2,14 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { authApi, organizationApi, projectApi, reportApi } from "@/lib/api/endpoints";
-import type { CreateProjectRequest, CreateReportRequest, LoginRequest, SignupRequest } from "@/lib/api/types";
+import { authApi, ideaApi, organizationApi, projectApi, reportApi } from "@/lib/api/endpoints";
+import type {
+  CreateProjectRequest,
+  CreateReportRequest,
+  IdeaValidationRequest,
+  LoginRequest,
+  SignupRequest
+} from "@/lib/api/types";
 import { useAuthStore } from "@/store/auth-store";
 
 export const queryKeys = {
@@ -66,3 +72,8 @@ export function useCreateReportMutation(projectId: string) {
   });
 }
 
+export function useValidateIdeaMutation() {
+  return useMutation({
+    mutationFn: (payload: IdeaValidationRequest) => ideaApi.validate(payload)
+  });
+}

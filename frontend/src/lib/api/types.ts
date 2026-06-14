@@ -68,3 +68,25 @@ export type CreateReportRequest = {
   summary?: string;
 };
 
+export type IdeaValidationRequest = {
+  idea: string;
+  project_name?: string;
+};
+
+export type IdeaValidationAnalysis = {
+  score: number;
+  confidence: number;
+  summary: string;
+  customer: string;
+  pain: string;
+  alternatives: string;
+  strengths: string[];
+  risks: string[];
+  next_steps: string[];
+};
+
+export type IdeaValidationResponse = {
+  project: Project;
+  report: Report;
+  analysis: IdeaValidationAnalysis;
+};

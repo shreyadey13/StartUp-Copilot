@@ -4,6 +4,7 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.use_cases.auth_use_cases import AuthUseCases
+from app.application.use_cases.idea_use_cases import IdeaUseCases
 from app.application.use_cases.organization_use_cases import OrganizationUseCases
 from app.application.use_cases.project_use_cases import ProjectUseCases
 from app.application.use_cases.report_use_cases import ReportUseCases
@@ -42,3 +43,9 @@ class RequestContainer:
 
     def report_use_cases(self) -> ReportUseCases:
         return ReportUseCases(reports=SqlAlchemyReportRepository(self.session))
+
+    def idea_use_cases(self) -> IdeaUseCases:
+        return IdeaUseCases(
+            projects=SqlAlchemyProjectRepository(self.session),
+            reports=SqlAlchemyReportRepository(self.session),
+        )
