@@ -99,7 +99,10 @@ export type IdeaValidationHistoryEntry = {
   reportTitle: string;
   score: number;
   confidence: number;
+  breakdown: Record<string, number>;
   createdAt: string;
   customer: string;
   summary: string;
+  reportSummary: string;
+  reportType: string;
 };

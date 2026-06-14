@@ -10,9 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useValidateIdeaMutation } from "@/lib/api/hooks";
+import { loadIdeaHistory, upsertIdeaHistory } from "@/lib/idea-history";
 import type { IdeaValidationAnalysis, IdeaValidationHistoryEntry } from "@/lib/api/types";
-
-const HISTORY_KEY = "ai-startup-copilot-idea-validation-history";
 
 const defaultIdea =
   "An AI copilot that helps first-time founders validate startup ideas using market data and Reddit sentiment.";
@@ -24,7 +23,7 @@ export function IdeaValidationWorkspace() {
   const [analysis, setAnalysis] = useState<IdeaValidationAnalysis>(fallbackAnalysis);
   const [submittedAt, setSubmittedAt] = useState<string>("Ready for your idea");
   const [artifact, setArtifact] = useState<{ projectName: string; reportTitle: string } | null>(null);
-  const [recentHistory, setRecentHistory] = useState<IdeaValidationHistoryEntry[]>(() => loadHistory());
+  const [recentHistory, setRecentHistory] = useState<IdeaValidationHistoryEntry[]>(() => loadIdeaHistory());
   const validateIdea = useValidateIdeaMutation();
 
   const completion = useMemo(() => Math.min(100, Math.max(45, analysis.score + 8)), [analysis.score]);
@@ -41,40 +40,44 @@ export function IdeaValidationWorkspace() {
       setAnalysis(result.analysis);
       setArtifact({ projectName: result.project.name, reportTitle: result.report.title });
       setSubmittedAt(new Date(result.report.created_at).toLocaleString());
-      persistHistory({
-        id: result.report.id,
-        idea: trimmedIdea,
-        projectName: result.project.name,
-        reportTitle: result.report.title,
-        score: result.analysis.score,
-        confidence: result.analysis.confidence,
-        createdAt: result.report.created_at,
-        customer: result.analysis.customer,
-        summary: result.analysis.summary
-      });
+      setRecentHistory(
+        upsertIdeaHistory({
+          id: result.report.id,
+          idea: trimmedIdea,
+          projectName: result.project.name,
+          reportTitle: result.report.title,
+          score: result.analysis.score,
+          confidence: result.analysis.confidence,
+          breakdown: result.analysis.breakdown,
+          createdAt: result.report.created_at,
+          customer: result.analysis.customer,
+          summary: result.analysis.summary,
+          reportSummary: result.report.summary ?? "",
+          reportType: result.report.report_type
+        })
+      );
     } catch {
       const nextAnalysis = analyzeIdea(trimmedIdea);
       setAnalysis(nextAnalysis);
       setArtifact({ projectName: deriveProjectName(trimmedIdea), reportTitle: "Idea validation report" });
       setSubmittedAt(new Date().toLocaleString());
-      persistHistory({
-        id: `local-${Date.now()}`,
-        idea: trimmedIdea,
-        projectName: deriveProjectName(trimmedIdea),
-        reportTitle: "Idea validation report",
-        score: nextAnalysis.score,
-        confidence: nextAnalysis.confidence,
-        createdAt: new Date().toISOString(),
-        customer: nextAnalysis.customer,
-        summary: nextAnalysis.summary
-      });
+      setRecentHistory(
+        upsertIdeaHistory({
+          id: `local-${Date.now()}`,
+          idea: trimmedIdea,
+          projectName: deriveProjectName(trimmedIdea),
+          reportTitle: "Idea validation report",
+          score: nextAnalysis.score,
+          confidence: nextAnalysis.confidence,
+          breakdown: nextAnalysis.breakdown,
+          createdAt: new Date().toISOString(),
+          customer: nextAnalysis.customer,
+          summary: nextAnalysis.summary,
+          reportSummary: nextAnalysis.summary,
+          reportType: "validation"
+        })
+      );
     }
-  }
-
-  function persistHistory(entry: IdeaValidationHistoryEntry) {
-    const next = [entry, ...loadHistory()].slice(0, 12);
-    setRecentHistory(next);
-    window.localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
   }
 
   return (
@@ -353,14 +356,5 @@ function deriveProjectName(idea: string) {
 }
 
 function loadHistory(): IdeaValidationHistoryEntry[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const stored = window.localStorage.getItem(HISTORY_KEY);
-    return stored ? (JSON.parse(stored) as IdeaValidationHistoryEntry[]) : [];
-  } catch {
-    return [];
-  }
+  return loadIdeaHistory();
 }

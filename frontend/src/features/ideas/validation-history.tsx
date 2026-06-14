@@ -8,11 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { IdeaValidationHistoryEntry } from "@/lib/api/types";
-
-const HISTORY_KEY = "ai-startup-copilot-idea-validation-history";
+import { loadIdeaHistory } from "@/lib/idea-history";
 
 export function ValidationHistory() {
-  const history = useMemo(loadHistory, []);
+  const history = useMemo(loadIdeaHistory, []);
 
   return (
     <div className="grid gap-6">
@@ -39,14 +38,15 @@ export function ValidationHistory() {
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">{entry.idea}</p>
                   <p className="mt-3 text-sm text-muted-foreground">{entry.summary}</p>
+                  <p className="mt-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">{entry.reportTitle}</p>
                 </div>
                 <div className="flex flex-col items-start justify-between gap-3 md:items-end">
                   <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                     {new Date(entry.createdAt).toLocaleString()}
                   </p>
                   <Button asChild variant="outline" size="sm" className="rounded-full">
-                    <Link href="/idea-analysis">
-                      Run again
+                    <Link href={`/reports/${entry.id}`}>
+                      Open report
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -68,17 +68,4 @@ export function ValidationHistory() {
       </Card>
     </div>
   );
-}
-
-function loadHistory(): IdeaValidationHistoryEntry[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const stored = window.localStorage.getItem(HISTORY_KEY);
-    return stored ? (JSON.parse(stored) as IdeaValidationHistoryEntry[]) : [];
-  } catch {
-    return [];
-  }
 }
