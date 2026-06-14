@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { FileText } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -9,14 +10,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { loadIdeaHistory } from "@/lib/idea-history";
 
 export function ReportList() {
-  const reports = loadIdeaHistory().map((entry) => ({
-    id: entry.id,
-    title: entry.reportTitle,
-    status: "Ready",
-    score: entry.score,
-    summary: entry.reportSummary || entry.summary,
-    createdAt: entry.createdAt
-  }));
+  const [reports, setReports] = useState(() =>
+    loadIdeaHistory().map((entry) => ({
+      id: entry.id,
+      title: entry.reportTitle,
+      status: "Ready",
+      score: entry.score,
+      summary: entry.reportSummary || entry.summary,
+      createdAt: entry.createdAt
+    }))
+  );
+
+  useEffect(() => {
+    setReports(
+      loadIdeaHistory().map((entry) => ({
+        id: entry.id,
+        title: entry.reportTitle,
+        status: "Ready",
+        score: entry.score,
+        summary: entry.reportSummary || entry.summary,
+        createdAt: entry.createdAt
+      }))
+    );
+  }, []);
 
   return (
     <div className="grid gap-4">

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Clock3, FileText, Target, TrendingUp } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,24 @@ import { loadIdeaHistory } from "@/lib/idea-history";
 
 export default function ReportDetailPage() {
   const params = useParams<{ reportId: string }>();
-  const entry = loadIdeaHistory().find((item) => item.id === params.reportId);
+  const [entry, setEntry] = useState(() => loadIdeaHistory().find((item) => item.id === params.reportId));
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setEntry(loadIdeaHistory().find((item) => item.id === params.reportId));
+    setHydrated(true);
+  }, [params.reportId]);
+
+  if (!hydrated) {
+    return (
+      <Card className="surface-panel rounded-[1.75rem]">
+        <CardHeader>
+          <CardTitle>Loading report</CardTitle>
+          <CardDescription>Fetching the saved validation from your browser.</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   if (!entry) {
     return (
