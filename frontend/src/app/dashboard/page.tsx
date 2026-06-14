@@ -17,24 +17,27 @@ const queue = [
 export default function DashboardPage() {
   return (
     <div className="grid gap-6">
-      <section className="surface-panel subtle-grid overflow-hidden rounded-lg">
+      <section className="surface-panel subtle-grid overflow-hidden rounded-[1.75rem] animate-rise-in">
         <div className="grid gap-6 bg-card/72 p-5 md:grid-cols-[minmax(0,1fr)_320px] md:p-6">
           <div className="max-w-3xl">
-            <Badge className="mb-4 bg-primary text-primary-foreground">Founder command center</Badge>
-            <h2 className="text-3xl font-semibold leading-tight md:text-4xl">
+            <Badge className="mb-4 gap-2 bg-primary text-primary-foreground shadow-sm">
+              <span className="h-2 w-2 rounded-full bg-white/90" />
+              Founder command center
+            </Badge>
+            <h2 className="max-w-2xl text-3xl font-semibold leading-tight tracking-tight md:text-4xl lg:text-5xl">
               Validate ideas, surface signals, and ship better startup decisions.
             </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground md:text-base">
               Your agents are coordinating market research, competitor scans, report generation, and investor-readiness checks across the active portfolio.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Button asChild>
+              <Button asChild className="rounded-full">
                 <Link href="/idea-analysis">
                   <Rocket className="h-4 w-4" />
                   Start analysis
                 </Link>
               </Button>
-              <Button variant="outline" asChild>
+              <Button variant="outline" asChild className="rounded-full">
                 <Link href="/reports">
                   <ArrowUpRight className="h-4 w-4" />
                   View reports
@@ -42,7 +45,7 @@ export default function DashboardPage() {
               </Button>
             </div>
           </div>
-          <div className="grid content-between rounded-lg border bg-background/80 p-4">
+          <div className="grid content-between rounded-[1.5rem] border bg-background/80 p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-muted-foreground">Workflow health</p>
               <Badge variant="outline">98.4%</Badge>
@@ -63,23 +66,29 @@ export default function DashboardPage() {
         </div>
       </section>
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {dashboardMetrics.map((metric) => (
-          <MetricCard key={metric.label} {...metric} />
+        {dashboardMetrics.map((metric, index) => (
+          <div key={metric.label} className="animate-rise-in" style={{ animationDelay: `${index * 90}ms` }}>
+            <MetricCard {...metric} />
+          </div>
         ))}
       </section>
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <Card className="surface-panel">
+        <Card className="surface-panel rounded-[1.75rem] animate-rise-in">
           <CardHeader>
             <CardTitle>Research Queue</CardTitle>
             <CardDescription>Active agent workflows across your startup portfolio.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
-            {queue.map((job) => {
+            {queue.map((job, index) => {
               const Icon = job.icon;
               return (
-                <div key={job.title} className="flex items-center justify-between rounded-md border bg-background/70 p-4">
+                <div
+                  key={job.title}
+                  className="flex items-center justify-between rounded-2xl border bg-background/70 p-4 transition-transform duration-300 hover:-translate-y-0.5"
+                  style={{ animationDelay: `${index * 110}ms` }}
+                >
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-secondary text-primary">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-secondary to-primary/10 text-primary">
                       <Icon className="h-4 w-4" />
                     </span>
                     <div className="min-w-0">
@@ -93,7 +102,9 @@ export default function DashboardPage() {
             })}
           </CardContent>
         </Card>
-        <AnalyticsPanel />
+        <div className="animate-rise-in" style={{ animationDelay: "180ms" }}>
+          <AnalyticsPanel />
+        </div>
       </section>
     </div>
   );

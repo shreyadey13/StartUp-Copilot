@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, Menu, Moon, Sun } from "lucide-react";
+import { Activity, ExternalLink, Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Avatar } from "@/components/ui/avatar";
@@ -45,10 +45,17 @@ export function AppHeader() {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <div className="hidden items-center gap-2 rounded-md border bg-card px-3 py-2 text-xs font-medium text-primary sm:flex">
+        <Link
+          href="https://shreyadey13.github.io/StartUp-Copilot/"
+          target="_blank"
+          rel="noreferrer"
+          className="hidden items-center gap-2 rounded-md border bg-card px-3 py-2 text-xs font-medium text-primary transition-transform duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm sm:flex"
+          aria-label="Open live deployment in a new tab"
+        >
           <Activity className="h-3.5 w-3.5" />
           Live
-        </div>
+          <ExternalLink className="h-3 w-3 opacity-70" />
+        </Link>
         <Button
           variant="ghost"
           size="icon"
